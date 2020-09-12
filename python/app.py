@@ -61,13 +61,13 @@ class CachedResult:
 @app.route("/api/update_estates_cache", methods=["POST"])
 def update_estates_cache():
     CachedResult.refresh_estates(propagation=False)
-    return None
+    return {}
 
 
 @app.route("/api/update_chairs_cache", methods=["POST"])
 def update_chairs_cache():
     CachedResult.refresh_chairs(propagation=False)
-    return None
+    return {}
 
 
 def select_all(query, *args, dictionary=True):
