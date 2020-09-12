@@ -45,7 +45,7 @@ class CachedResult:
         CachedResult.estates = camelize(rows)
 
         for ip in servers:
-            requests.post(f'http://{ip}/update_estates_cache')
+            requests.post(f'http://{ip}/api/update_estates_cache')
 
     @staticmethod
     def refresh_chairs():
@@ -53,16 +53,16 @@ class CachedResult:
         CachedResult.chairs = camelize(rows)
 
         for ip in servers:
-            requests.post(f'http://{ip}/update_chairs_cache')
+            requests.post(f'http://{ip}/api/update_chairs_cache')
 
 
-@app.route("/update_estates_cache", methods=["POST"])
+@app.route("/api/update_estates_cache", methods=["POST"])
 def update_estates_cache():
     CachedResult.refresh_estates()
     return None
 
 
-@app.route("/update_chairs_cache", methods=["POST"])
+@app.route("/api/update_chairs_cache", methods=["POST"])
 def update_chairs_cache():
     CachedResult.refresh_chairs()
     return None
