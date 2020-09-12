@@ -64,13 +64,13 @@ def post_initialize():
 
 @app.route("/api/estate/low_priced", methods=["GET"])
 def get_estate_low_priced():
-    rows = select_all("SELECT * FROM estate ORDER BY rent ASC, id ASC LIMIT %s", (LIMIT,))
+    rows = select_all("SELECT id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity FROM estate ORDER BY rent ASC, id ASC LIMIT %s", (LIMIT,))
     return {"estates": camelize(rows)}
 
 
 @app.route("/api/chair/low_priced", methods=["GET"])
 def get_chair_low_priced():
-    rows = select_all("SELECT * FROM chair WHERE stock > 0 ORDER BY price ASC, id ASC LIMIT %s", (LIMIT,))
+    rows = select_all("SELECT id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock FROM chair WHERE stock > 0 ORDER BY price ASC, id ASC LIMIT %s", (LIMIT,))
     return {"chairs": camelize(rows)}
 
 
@@ -167,10 +167,10 @@ def get_chair_search():
 
     search_condition = " AND ".join(conditions)
 
-    query = f"SELECT COUNT(*) as count FROM chair WHERE {search_condition}"
+    query = f"SELECT COUNT(id) as count FROM chair WHERE {search_condition}"
     count = select_row(query, params)["count"]
 
-    query = f"SELECT * FROM chair WHERE {search_condition} ORDER BY popularity DESC, id ASC LIMIT %s OFFSET %s"
+    query = f"SELECT id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock FROM chair WHERE {search_condition} ORDER BY popularity DESC, id ASC LIMIT %s OFFSET %s"
     chairs = select_all(query, params + [per_page, per_page * page])
 
     return {"count": count, "chairs": camelize(chairs)}
@@ -183,7 +183,7 @@ def get_chair_search_condition():
 
 @app.route("/api/chair/<int:chair_id>", methods=["GET"])
 def get_chair(chair_id):
-    chair = select_row("SELECT * FROM chair WHERE id = %s", (chair_id,))
+    chair = select_row("SELECT id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock FROM chair WHERE id = %s", (chair_id,))
     if chair is None or chair["stock"] <= 0:
         raise NotFound()
     return camelize(chair)
@@ -195,7 +195,7 @@ def post_chair_buy(chair_id):
     try:
         cnx.start_transaction()
         cur = cnx.cursor(dictionary=True)
-        cur.execute("SELECT * FROM chair WHERE id = %s AND stock > 0 FOR UPDATE", (chair_id,))
+        cur.execute("SELECT id FROM chair WHERE id = %s AND stock > 0 FOR UPDATE", (chair_id,))
         chair = cur.fetchone()
         if chair is None:
             raise NotFound()
@@ -278,10 +278,10 @@ def get_estate_search():
 
     search_condition = " AND ".join(conditions)
 
-    query = f"SELECT COUNT(*) as count FROM estate WHERE {search_condition}"
+    query = f"SELECT COUNT(id) as count FROM estate WHERE {search_condition}"
     count = select_row(query, params)["count"]
 
-    query = f"SELECT * FROM estate WHERE {search_condition} ORDER BY popularity DESC, id ASC LIMIT %s OFFSET %s"
+    query = f"SELECT id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity FROM estate WHERE {search_condition} ORDER BY popularity DESC, id ASC LIMIT %s OFFSET %s"
     chairs = select_all(query, params + [per_page, per_page * page])
 
     return {"count": count, "estates": camelize(chairs)}
@@ -294,7 +294,7 @@ def get_estate_search_condition():
 
 @app.route("/api/estate/req_doc/<int:estate_id>", methods=["POST"])
 def post_estate_req_doc(estate_id):
-    estate = select_row("SELECT * FROM estate WHERE id = %s", (estate_id,))
+    estate = select_row("SELECT id FROM estate WHERE id = %s", (estate_id,))
     if estate is None:
         raise NotFound()
     return {"ok": True}
@@ -322,7 +322,7 @@ def post_estate_nazotte():
         cur = cnx.cursor(dictionary=True)
         cur.execute(
             (
-                "SELECT * FROM estate"
+                "SELECT id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity FROM estate"
                 " WHERE latitude <= %s AND latitude >= %s AND longitude <= %s AND longitude >= %s"
                 " ORDER BY popularity DESC, id ASC"
             ),
@@ -351,7 +351,7 @@ def post_estate_nazotte():
 
 @app.route("/api/estate/<int:estate_id>", methods=["GET"])
 def get_estate(estate_id):
-    estate = select_row("SELECT * FROM estate WHERE id = %s", (estate_id,))
+    estate = select_row("SELECT id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity FROM estate WHERE id = %s", (estate_id,))
     if estate is None:
         raise NotFound()
     return camelize(estate)
@@ -359,12 +359,12 @@ def get_estate(estate_id):
 
 @app.route("/api/recommended_estate/<int:chair_id>", methods=["GET"])
 def get_recommended_estate(chair_id):
-    chair = select_row("SELECT * FROM chair WHERE id = %s", (chair_id,))
+    chair = select_row("SELECT width, height, depth FROM chair WHERE id = %s", (chair_id,))
     if chair is None:
         raise BadRequest(f"Invalid format searchRecommendedEstateWithChair id : {chair_id}")
     w, h, d = chair["width"], chair["height"], chair["depth"]
     query = (
-        "SELECT * FROM estate"
+        "SELECT id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity FROM estate"
         " WHERE (door_width >= %s AND door_height >= %s)"
         "    OR (door_width >= %s AND door_height >= %s)"
         "    OR (door_width >= %s AND door_height >= %s)"
