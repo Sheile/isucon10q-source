@@ -507,4 +507,4 @@ def post_estate():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=getenv("SERVER_PORT", 1323), debug=True, threaded=True)
+    app.run(host="0.0.0.0", port=getenv("SERVER_PORT", 1323), debug=False, threaded=True)
