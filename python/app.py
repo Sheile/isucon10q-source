@@ -50,6 +50,7 @@ def post_initialize():
         "0_Schema.sql",
         "1_DummyEstateData.sql",
         "2_DummyChairData.sql",
+        "3_AddIndex.sql",
     ]
 
     for sql_file in sql_files:
