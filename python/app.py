@@ -58,6 +58,76 @@ class CachedResult:
                 requests.post(f'http://{ip}/api/update_chairs_cache')
 
 
+class Fixture:
+    # estate
+    def get_door_height_range_id(value):
+        if value < 80:
+            return 0
+        if value < 110:
+            return 1
+        if value < 150:
+            return 2
+        return 3
+
+    def get_door_width_range_id(value):
+        if value < 80:
+            return 0
+        if value < 110:
+            return 1
+        if value < 150:
+            return 2
+        return 3
+
+    def get_rent_range_id(value):
+        if value < 50000:
+            return 0
+        if value < 100000:
+            return 1
+        if value < 150000:
+            return 2
+        return 3
+
+    def get_height_range_id(value):
+        if value < 80:
+            return 0
+        if value < 110:
+            return 1
+        if value < 150:
+            return 2
+        return 3
+
+    def get_width_range_id(value):
+        if value < 80:
+            return 0
+        if value < 110:
+            return 1
+        if value < 150:
+            return 2
+        return 3
+
+    def get_depth_range_id(value):
+        if value < 80:
+            return 0
+        if value < 110:
+            return 1
+        if value < 150:
+            return 2
+        return 3
+
+    def get_price_range_id(value):
+        if value < 3000:
+            return 0
+        if value < 6000:
+            return 1
+        if value < 9000:
+            return 2
+        if value < 12000:
+            return 3
+        if value < 15000:
+            return 4
+        return 5
+
+
 @app.route("/api/update_estates_cache", methods=["POST"])
 def update_estates_cache():
     CachedResult.refresh_estates(propagation=False)
@@ -385,7 +455,12 @@ def post_chair():
         cnx.start_transaction()
         cur = cnx.cursor()
         for record in records:
-            query = "INSERT INTO chair(id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            record.append(Fixture.get_height_range_id(int(record[5])))
+            record.append(Fixture.get_width_range_id(int(record[6])))
+            record.append(Fixture.get_depth_range_id(int(record[7])))
+            record.append(Fixture.get_price_range_id(int(record[4])))
+
+            query = "INSERT INTO chair(id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock, height_range_id, width_range_id, depth_range_id, price_range_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
             cur.execute(query, record)
 
         # Refresh cache before unlock by commit
@@ -410,7 +485,11 @@ def post_estate():
         cnx.start_transaction()
         cur = cnx.cursor()
         for record in records:
-            query = "INSERT INTO estate(id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            record.append(Fixture.get_door_height_range_id(int(record[8])))
+            record.append(Fixture.get_door_width_range_id(int(record[9])))
+            record.append(Fixture.get_rent_range_id(int(record[7])))
+
+            query = "INSERT INTO estate(id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity, door_height_range_id, door_width_range_id, rent_range_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
             cur.execute(query, record)
 
         # Refresh cache before unlock by commit
