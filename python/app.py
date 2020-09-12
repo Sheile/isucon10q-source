@@ -22,14 +22,14 @@ estate_search_condition = json.load(open("../fixture/estate_condition.json", "r"
 app = flask.Flask(__name__)
 
 mysql_connection_env = {
-    "host": getenv("MYSQL_HOST", "127.0.0.1"),
+    "host": getenv("MYSQL_HOST", "10.162.24.103"),
     "port": getenv("MYSQL_PORT", 3306),
     "user": getenv("MYSQL_USER", "isucon"),
     "password": getenv("MYSQL_PASS", "isucon"),
     "database": getenv("MYSQL_DBNAME", "isuumo"),
 }
 
-servers = set(['10.162.24.101', '10.162.24.102', '10.162.24.103'])
+servers = set(['10.162.24.101', '10.162.24.102'])
 servers = servers - set([netifaces.ifaddresses('ens5')[netifaces.AF_INET][0]['addr']])
 
 cnxpool = QueuePool(lambda: mysql.connector.connect(**mysql_connection_env), pool_size=10)
