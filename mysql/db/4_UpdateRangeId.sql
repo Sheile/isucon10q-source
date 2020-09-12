@@ -37,3 +37,8 @@ UPDATE isuumo.chair SET price_range_id = 2 WHERE price >= 6000 AND price < 9000;
 UPDATE isuumo.chair SET price_range_id = 3 WHERE price >= 9000 AND price < 12000;
 UPDATE isuumo.chair SET price_range_id = 4 WHERE price >= 12000 AND price < 15000;
 UPDATE isuumo.chair SET price_range_id = 5 WHERE price >= 15000;
+
+
+-- sort key
+UPDATE isuumo.estate SET sort_key = popularity * 100000000 - id;
+UPDATE isuumo.chair SET sort_key = popularity * 100000000 - id;

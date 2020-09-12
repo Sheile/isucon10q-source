@@ -254,7 +254,7 @@ def get_chair_search():
     query = f"SELECT COUNT(id) as count FROM chair WHERE {search_condition}"
     count = select_row(query, params)["count"]
 
-    query = f"SELECT id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock FROM chair WHERE {search_condition} ORDER BY popularity DESC, id ASC LIMIT %s OFFSET %s"
+    query = f"SELECT id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock FROM chair WHERE {search_condition} ORDER BY sort_key DESC LIMIT %s OFFSET %s"
     chairs = select_all(query, params + [per_page, per_page * page])
 
     return {"count": count, "chairs": camelize(chairs)}
@@ -348,7 +348,7 @@ def get_estate_search():
     query = f"SELECT COUNT(id) as count FROM estate WHERE {search_condition}"
     count = select_row(query, params)["count"]
 
-    query = f"SELECT id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity FROM estate WHERE {search_condition} ORDER BY popularity DESC, id ASC LIMIT %s OFFSET %s"
+    query = f"SELECT id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity FROM estate WHERE {search_condition} ORDER BY sort_key DESC LIMIT %s OFFSET %s"
     chairs = select_all(query, params + [per_page, per_page * page])
 
     return {"count": count, "estates": camelize(chairs)}
@@ -391,7 +391,7 @@ def post_estate_nazotte():
             (
                 "SELECT id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity FROM estate"
                 " WHERE latitude <= %s AND latitude >= %s AND longitude <= %s AND longitude >= %s"
-                " ORDER BY popularity DESC, id ASC"
+                " ORDER BY sort_key DESC"
             ),
             (
                 bounding_box["bottom_right_corner"]["latitude"],
@@ -438,7 +438,7 @@ def get_recommended_estate(chair_id):
         "    OR (door_width >= %s AND door_height >= %s)"
         "    OR (door_width >= %s AND door_height >= %s)"
         "    OR (door_width >= %s AND door_height >= %s)"
-        " ORDER BY popularity DESC, id ASC"
+        " ORDER BY sort_key DESC"
         " LIMIT %s"
     )
     estates = select_all(query, (w, h, w, d, h, w, h, d, d, w, d, h, LIMIT))
@@ -459,8 +459,9 @@ def post_chair():
             record.append(Fixture.get_width_range_id(int(record[6])))
             record.append(Fixture.get_depth_range_id(int(record[7])))
             record.append(Fixture.get_price_range_id(int(record[4])))
+            record.append(int(record[11]) * 100000000 - int(record[0]))
 
-            query = "INSERT INTO chair(id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock, height_range_id, width_range_id, depth_range_id, price_range_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            query = "INSERT INTO chair(id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock, height_range_id, width_range_id, depth_range_id, price_range_id, sort_key) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
             cur.execute(query, record)
 
         # Refresh cache before unlock by commit
@@ -488,8 +489,9 @@ def post_estate():
             record.append(Fixture.get_door_height_range_id(int(record[8])))
             record.append(Fixture.get_door_width_range_id(int(record[9])))
             record.append(Fixture.get_rent_range_id(int(record[7])))
+            record.append(int(record[11]) * 100000000 - int(record[0]))
 
-            query = "INSERT INTO estate(id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity, door_height_range_id, door_width_range_id, rent_range_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            query = "INSERT INTO estate(id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity, door_height_range_id, door_width_range_id, rent_range_id, sort_key) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
             cur.execute(query, record)
 
         # Refresh cache before unlock by commit

@@ -20,7 +20,8 @@ CREATE TABLE isuumo.estate
     popularity  INTEGER             NOT NULL,
     door_height_range_id INTEGER,
     door_width_range_id INTEGER,
-    rent_range_id INTEGER
+    rent_range_id INTEGER,
+    sort_key BIGINT
 );
 
 CREATE TABLE isuumo.chair
@@ -41,5 +42,6 @@ CREATE TABLE isuumo.chair
     price_range_id INTEGER,
     height_range_id INTEGER,
     width_range_id INTEGER,
-    depth_range_id INTEGER
+    depth_range_id INTEGER,
+    sort_key BIGINT
 );
