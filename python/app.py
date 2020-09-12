@@ -40,31 +40,33 @@ class CachedResult:
     chairs = []
 
     @staticmethod
-    def refresh_estates():
+    def refresh_estates(propagation=True):
         rows = select_all("SELECT id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity FROM estate ORDER BY rent ASC, id ASC LIMIT %s", (LIMIT,))
         CachedResult.estates = camelize(rows)
 
-        for ip in servers:
-            requests.post(f'http://{ip}/api/update_estates_cache')
+        if propagation:
+            for ip in servers:
+                requests.post(f'http://{ip}/api/update_estates_cache')
 
     @staticmethod
-    def refresh_chairs():
+    def refresh_chairs(propagation=True):
         rows = select_all("SELECT id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock FROM chair WHERE stock > 0 ORDER BY price ASC, id ASC LIMIT %s", (LIMIT,))
         CachedResult.chairs = camelize(rows)
 
-        for ip in servers:
-            requests.post(f'http://{ip}/api/update_chairs_cache')
+        if propagation:
+            for ip in servers:
+                requests.post(f'http://{ip}/api/update_chairs_cache')
 
 
 @app.route("/api/update_estates_cache", methods=["POST"])
 def update_estates_cache():
-    CachedResult.refresh_estates()
+    CachedResult.refresh_estates(propagation=False)
     return None
 
 
 @app.route("/api/update_chairs_cache", methods=["POST"])
 def update_chairs_cache():
-    CachedResult.refresh_chairs()
+    CachedResult.refresh_chairs(propagation=False)
     return None
 
 
