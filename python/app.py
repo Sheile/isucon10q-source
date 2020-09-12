@@ -10,6 +10,8 @@ from sqlalchemy.pool import QueuePool
 from humps import camelize
 import numpy as np
 import cv2
+import netifaces
+import requests
 
 LIMIT = 20
 NAZOTTE_LIMIT = 50
@@ -27,7 +29,43 @@ mysql_connection_env = {
     "database": getenv("MYSQL_DBNAME", "isuumo"),
 }
 
+servers = set(['10.162.24.101', '10.162.24.102', '10.162.24.103'])
+servers = servers - set([netifaces.ifaddresses('ens5')[netifaces.AF_INET][0]['addr']])
+
 cnxpool = QueuePool(lambda: mysql.connector.connect(**mysql_connection_env), pool_size=10)
+
+
+class CachedResult:
+    estates = []
+    chairs = []
+
+    @staticmethod
+    def refresh_estates():
+        rows = select_all("SELECT id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity FROM estate ORDER BY rent ASC, id ASC LIMIT %s", (LIMIT,))
+        CachedResult.estates = camelize(rows)
+
+        for ip in servers:
+            requests.post(f'http://{ip}/update_estates_cache')
+
+    @staticmethod
+    def refresh_chairs():
+        rows = select_all("SELECT id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock FROM chair WHERE stock > 0 ORDER BY price ASC, id ASC LIMIT %s", (LIMIT,))
+        CachedResult.chairs = camelize(rows)
+
+        for ip in servers:
+            requests.post(f'http://{ip}/update_chairs_cache')
+
+
+@app.route("/update_estates_cache", methods=["POST"])
+def update_estates_cache():
+    CachedResult.refresh_estates()
+    return None
+
+
+@app.route("/update_chairs_cache", methods=["POST"])
+def update_chairs_cache():
+    CachedResult.refresh_chairs()
+    return None
 
 
 def select_all(query, *args, dictionary=True):
@@ -59,19 +97,20 @@ def post_initialize():
         command = f"mysql -h {mysql_connection_env['host']} -u {mysql_connection_env['user']} -p{mysql_connection_env['password']} -P {mysql_connection_env['port']} {mysql_connection_env['database']} < {path.join(sql_dir, sql_file)}"
         subprocess.run(["bash", "-c", command])
 
+    CachedResult.refresh_estates()
+    CachedResult.refresh_chairs()
+
     return {"language": "python"}
 
 
 @app.route("/api/estate/low_priced", methods=["GET"])
 def get_estate_low_priced():
-    rows = select_all("SELECT id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity FROM estate ORDER BY rent ASC, id ASC LIMIT %s", (LIMIT,))
-    return {"estates": camelize(rows)}
+    return {"estates": CachedResult.estates}
 
 
 @app.route("/api/chair/low_priced", methods=["GET"])
 def get_chair_low_priced():
-    rows = select_all("SELECT id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock FROM chair WHERE stock > 0 ORDER BY price ASC, id ASC LIMIT %s", (LIMIT,))
-    return {"chairs": camelize(rows)}
+    return {"chairs": CachedResult.chairs}
 
 
 @app.route("/api/chair/search", methods=["GET"])
@@ -200,6 +239,10 @@ def post_chair_buy(chair_id):
         if chair is None:
             raise NotFound()
         cur.execute("UPDATE chair SET stock = stock - 1 WHERE id = %s", (chair_id,))
+
+        # Refresh cache before unlock by commit
+        CachedResult.refresh_chairs()
+
         cnx.commit()
         return {"ok": True}
     except Exception as e:
@@ -390,6 +433,10 @@ def post_chair():
         for record in records:
             query = "INSERT INTO chair(id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
             cur.execute(query, record)
+
+        # Refresh cache before unlock by commit
+        CachedResult.refresh_chairs()
+
         cnx.commit()
         return {"ok": True}, 201
     except Exception as e:
@@ -411,6 +458,10 @@ def post_estate():
         for record in records:
             query = "INSERT INTO estate(id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
             cur.execute(query, record)
+
+        # Refresh cache before unlock by commit
+        CachedResult.refresh_estates()
+
         cnx.commit()
         return {"ok": True}, 201
     except Exception as e:
