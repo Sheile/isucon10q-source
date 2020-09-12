@@ -8,6 +8,8 @@ from werkzeug.exceptions import BadRequest, NotFound
 import mysql.connector
 from sqlalchemy.pool import QueuePool
 from humps import camelize
+import numpy as np
+import cv2
 
 LIMIT = 20
 NAZOTTE_LIMIT = 50
@@ -312,6 +314,9 @@ def post_estate_nazotte():
         "bottom_right_corner": {"longitude": max(longitudes), "latitude": max(latitudes)},
     }
 
+    points = np.array(list(zip(latitudes, longitudes)), dtype='float32')
+    convex = cv2.convexHull(points)
+
     cnx = cnxpool.connect()
     try:
         cur = cnx.cursor(dictionary=True)
@@ -331,22 +336,15 @@ def post_estate_nazotte():
         estates = cur.fetchall()
         estates_in_polygon = []
         for estate in estates:
-            query = "SELECT * FROM estate WHERE id = %s AND ST_Contains(ST_PolygonFromText(%s), ST_GeomFromText(%s))"
-            polygon_text = (
-                f"POLYGON(({','.join(['{} {}'.format(c['latitude'], c['longitude']) for c in coordinates])}))"
-            )
-            geom_text = f"POINT({estate['latitude']} {estate['longitude']})"
-            cur.execute(query, (estate["id"], polygon_text, geom_text))
-            if len(cur.fetchall()) > 0:
-                estates_in_polygon.append(estate)
+            if cv2.pointPolygonTest(convex, (estate['latitude'], estate['longitude']), measureDist=False) > 0:
+                estates_in_polygon.append(camelize(estate))
+                if len(estates_in_polygon) >= NAZOTTE_LIMIT:
+                    break
     finally:
         cnx.close()
 
-    results = {"estates": []}
-    for i, estate in enumerate(estates_in_polygon):
-        if i >= NAZOTTE_LIMIT:
-            break
-        results["estates"].append(camelize(estate))
+    results = {}
+    results["estates"] = estates_in_polygon
     results["count"] = len(results["estates"])
     return results
 
