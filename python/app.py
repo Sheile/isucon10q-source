@@ -92,6 +92,7 @@ def post_initialize():
         "0_Schema.sql",
         "1_DummyEstateData.sql",
         "2_DummyChairData.sql",
+        "4_UpdateRangeId.sql",
         "9_AddIndex.sql",
     ]
 
@@ -123,60 +124,32 @@ def get_chair_search():
     params = []
 
     if args.get("priceRangeId"):
-        for _range in chair_search_condition["price"]["ranges"]:
-            if _range["id"] == int(args.get("priceRangeId")):
-                price = _range
-                break
-        else:
-            raise BadRequest("priceRangeID invalid")
-        if price["min"] != -1:
-            conditions.append("price >= %s")
-            params.append(price["min"])
-        if price["max"] != -1:
-            conditions.append("price < %s")
-            params.append(price["max"])
+        if args.get("priceRangeId") not in ['0', '1', '2', '3', '4', '5']:
+            raise BadRequest("priceRangeId invalid")
+
+        conditions.append("price_range_id = %s")
+        params.append(args.get("priceRangeId"))
 
     if args.get("heightRangeId"):
-        for _range in chair_search_condition["height"]["ranges"]:
-            if _range["id"] == int(args.get("heightRangeId")):
-                height = _range
-                break
-        else:
+        if args.get("heightRangeId") not in ['0', '1', '2', '3']:
             raise BadRequest("heightRangeId invalid")
-        if height["min"] != -1:
-            conditions.append("height >= %s")
-            params.append(height["min"])
-        if height["max"] != -1:
-            conditions.append("height < %s")
-            params.append(height["max"])
+
+        conditions.append("height_range_id = %s")
+        params.append(args.get("heightRangeId"))
 
     if args.get("widthRangeId"):
-        for _range in chair_search_condition["width"]["ranges"]:
-            if _range["id"] == int(args.get("widthRangeId")):
-                width = _range
-                break
-        else:
+        if args.get("widthRangeId") not in ['0', '1', '2', '3']:
             raise BadRequest("widthRangeId invalid")
-        if width["min"] != -1:
-            conditions.append("width >= %s")
-            params.append(width["min"])
-        if width["max"] != -1:
-            conditions.append("width < %s")
-            params.append(width["max"])
+
+        conditions.append("width_range_id = %s")
+        params.append(args.get("widthRangeId"))
 
     if args.get("depthRangeId"):
-        for _range in chair_search_condition["depth"]["ranges"]:
-            if _range["id"] == int(args.get("depthRangeId")):
-                depth = _range
-                break
-        else:
+        if args.get("depthRangeId") not in ['0', '1', '2', '3']:
             raise BadRequest("depthRangeId invalid")
-        if depth["min"] != -1:
-            conditions.append("depth >= %s")
-            params.append(depth["min"])
-        if depth["max"] != -1:
-            conditions.append("depth < %s")
-            params.append(depth["max"])
+
+        conditions.append("depth_range_id = %s")
+        params.append(args.get("depthRangeId"))
 
     if args.get("kind"):
         conditions.append("kind = %s")
@@ -262,46 +235,25 @@ def get_estate_search():
     params = []
 
     if args.get("doorHeightRangeId"):
-        for _range in estate_search_condition["doorHeight"]["ranges"]:
-            if _range["id"] == int(args.get("doorHeightRangeId")):
-                door_height = _range
-                break
-        else:
+        if args.get("doorHeightRangeId") not in ['0', '1', '2', '3']:
             raise BadRequest("doorHeightRangeId invalid")
-        if door_height["min"] != -1:
-            conditions.append("door_height >= %s")
-            params.append(door_height["min"])
-        if door_height["max"] != -1:
-            conditions.append("door_height < %s")
-            params.append(door_height["max"])
+
+        conditions.append("door_height_range_id = %s")
+        params.append(args.get("doorHeightRangeId"))
 
     if args.get("doorWidthRangeId"):
-        for _range in estate_search_condition["doorWidth"]["ranges"]:
-            if _range["id"] == int(args.get("doorWidthRangeId")):
-                door_width = _range
-                break
-        else:
+        if args.get("doorWidthRangeId") not in ['0', '1', '2', '3']:
             raise BadRequest("doorWidthRangeId invalid")
-        if door_width["min"] != -1:
-            conditions.append("door_width >= %s")
-            params.append(door_width["min"])
-        if door_width["max"] != -1:
-            conditions.append("door_width < %s")
-            params.append(door_width["max"])
+
+        conditions.append("door_width_range_id = %s")
+        params.append(args.get("doorWidthRangeId"))
 
     if args.get("rentRangeId"):
-        for _range in estate_search_condition["rent"]["ranges"]:
-            if _range["id"] == int(args.get("rentRangeId")):
-                rent = _range
-                break
-        else:
+        if args.get("rentRangeId") not in ['0', '1', '2', '3']:
             raise BadRequest("rentRangeId invalid")
-        if rent["min"] != -1:
-            conditions.append("rent >= %s")
-            params.append(rent["min"])
-        if rent["max"] != -1:
-            conditions.append("rent < %s")
-            params.append(rent["max"])
+
+        conditions.append("rent_range_id = %s")
+        params.append(args.get("rentRangeId"))
 
     if args.get("features"):
         for feature_confition in args.get("features").split(","):
