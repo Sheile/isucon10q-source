@@ -29,7 +29,7 @@ mysql_connection_env = {
     "database": getenv("MYSQL_DBNAME", "isuumo"),
 }
 
-servers = set(['10.162.24.101', '10.162.24.102'])
+servers = set(['10.162.24.101:1323', '10.162.24.102:1323'])
 servers = servers - set([netifaces.ifaddresses('ens5')[netifaces.AF_INET][0]['addr']])
 
 cnxpool = QueuePool(lambda: mysql.connector.connect(**mysql_connection_env), pool_size=10)
