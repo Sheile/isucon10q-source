@@ -39,6 +39,8 @@ class CachedResult:
     estates = []
     chairs = []
 
+    estate_counts = {}
+
     @staticmethod
     def refresh_estates(propagation=True):
         rows = select_all("SELECT id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity FROM estate ORDER BY rent ASC, id ASC LIMIT %s", (LIMIT,))
@@ -345,8 +347,11 @@ def get_estate_search():
 
     search_condition = " AND ".join(conditions)
 
-    query = f"SELECT COUNT(id) as count FROM estate WHERE {search_condition}"
-    count = select_row(query, params)["count"]
+    count = CachedResult.estate_counts.get(search_condition)
+    if count is None:
+        query = f"SELECT COUNT(id) as count FROM estate WHERE {search_condition}"
+        count = select_row(query, params)["count"]
+        CachedResult.estate_counts[search_condition] = count
 
     query = f"SELECT id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity FROM estate WHERE {search_condition} ORDER BY sort_key DESC LIMIT %s OFFSET %s"
     chairs = select_all(query, params + [per_page, per_page * page])
