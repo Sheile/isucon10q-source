@@ -455,15 +455,19 @@ def post_chair():
     try:
         cnx.start_transaction()
         cur = cnx.cursor()
+        sqls = []
+        values = []
         for record in records:
-            record.append(Fixture.get_height_range_id(int(record[5])))
-            record.append(Fixture.get_width_range_id(int(record[6])))
-            record.append(Fixture.get_depth_range_id(int(record[7])))
-            record.append(Fixture.get_price_range_id(int(record[4])))
-            record.append(int(record[11]) * 100000000 - int(record[0]))
+            values.extend(record)
+            values.append(Fixture.get_height_range_id(int(record[5])))
+            values.append(Fixture.get_width_range_id(int(record[6])))
+            values.append(Fixture.get_depth_range_id(int(record[7])))
+            values.append(Fixture.get_price_range_id(int(record[4])))
+            values.append(int(record[11]) * 100000000 - int(record[0]))
+            sqls.append('(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)')
 
-            query = "INSERT INTO chair(id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock, height_range_id, width_range_id, depth_range_id, price_range_id, sort_key) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-            cur.execute(query, record)
+        query = "INSERT INTO chair(id, name, description, thumbnail, price, height, width, depth, color, features, kind, popularity, stock, height_range_id, width_range_id, depth_range_id, price_range_id, sort_key) VALUES " + ', '.join(sqls)
+        cur.execute(query, values)
 
         # Refresh cache before unlock by commit
         CachedResult.refresh_chairs()
