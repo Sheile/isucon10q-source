@@ -390,6 +390,7 @@ def post_estate_nazotte():
         cur.execute(
             (
                 "SELECT id, name, description, thumbnail, address, latitude, longitude, rent, door_height, door_width, features, popularity FROM estate"
+                " FORCE INDEX(index_estate_latitude_longitude)"
                 " WHERE latitude <= %s AND latitude >= %s AND longitude <= %s AND longitude >= %s"
                 " ORDER BY sort_key DESC"
             ),
